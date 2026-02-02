@@ -11,6 +11,11 @@ interface SearchFormProps {
 export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
   const [city, setCity] = useState('');
 
+  const handleInputChange = (value: string) => {
+    const filteredValue = value.replace(/[0-9]/g, '');
+    setCity(filteredValue);
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (city.trim()) {
@@ -24,11 +29,11 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
         type="text"
         placeholder="Enter city name..."
         value={city}
-        onChange={(e) => setCity(e.target.value)}
+        onChange={(e) => handleInputChange(e.target.value)}
         disabled={isLoading}
         className="flex-1"
       />
-      <Button type="submit" disabled={isLoading || !city.trim()}>
+      <Button className="cursor-pointer" type="submit" disabled={isLoading || !city.trim()}>
         {isLoading ? (
           <span className="animate-spin">
             <Search className="size-4" />

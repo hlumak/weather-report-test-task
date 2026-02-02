@@ -15,7 +15,7 @@ export function ErrorMessage({ message, onDismiss }: ErrorMessageProps) {
         variant="ghost"
         size="icon-xs"
         onClick={onDismiss}
-        className="shrink-0"
+        className="cursor-pointer shrink-0"
       >
         <X className="size-4" />
       </Button>
