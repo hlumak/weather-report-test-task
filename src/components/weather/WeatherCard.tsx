@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Cloud, CloudRain, CloudSnow, Droplets, Sun, Wind } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WeatherData, WeatherCondition } from '@/types/weather';
@@ -23,7 +24,7 @@ function getWeatherIcon(condition: WeatherCondition) {
   }
 }
 
-export function WeatherCard({ weather }: WeatherCardProps) {
+export const WeatherCard = memo(function WeatherCard({ weather }: WeatherCardProps) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
@@ -53,7 +54,7 @@ export function WeatherCard({ weather }: WeatherCardProps) {
       </CardContent>
     </Card>
   );
-}
+});
 
 interface WeatherDetailProps {
   icon: React.ReactNode;

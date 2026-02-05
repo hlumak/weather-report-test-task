@@ -1,49 +1,62 @@
 import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { WeatherData } from '@/types/weather';
-import { fetchWeather } from '@/services/weatherApi';
+import { fetchWeather, abortCurrentRequest } from '@/services/weatherApi';
+
+const STALE_TIME = 10 * 60 * 1000;
 
 interface UseWeatherResult {
   weather: WeatherData | null;
   isLoading: boolean;
   error: string | null;
-  fetchWeatherForCity: (city: string) => Promise<void>;
+  fetchWeatherForCity: (city: string) => void;
   clearError: () => void;
 }
 
 export function useWeather(): UseWeatherResult {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+  const [manualError, setManualError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchWeatherForCity = useCallback(async (city: string) => {
-    if (!city.trim()) {
-      setError('Please enter a city name');
+  const { data, isLoading, error: queryError, isFetching } = useQuery({
+    queryKey: ['weather', city],
+    queryFn: () => fetchWeather(city!),
+    enabled: !!city,
+    staleTime: STALE_TIME,
+    gcTime: STALE_TIME,
+    retry: false,
+  });
+
+  const fetchWeatherForCity = useCallback((newCity: string) => {
+    const trimmedCity = newCity.trim();
+    if (!trimmedCity) {
+      setManualError('Please enter a city name');
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    setManualError(null);
 
-    try {
-      const data = await fetchWeather(city);
-      setWeather(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(message);
-      setWeather(null);
-    } finally {
-      setIsLoading(false);
+    if (city !== trimmedCity) {
+      abortCurrentRequest();
     }
-  }, []);
+
+    if (city === trimmedCity) {
+      queryClient.invalidateQueries({ queryKey: ['weather', city] });
+    } else {
+      setCity(trimmedCity);
+    }
+  }, [city, queryClient]);
 
   const clearError = useCallback(() => {
-    setError(null);
+    setManualError(null);
   }, []);
 
+  const errorMessage = manualError || (queryError instanceof Error ? queryError.message : null);
+
   return {
-    weather,
-    isLoading,
-    error,
+    weather: data ?? null,
+    isLoading: isLoading || isFetching,
+    error: errorMessage,
     fetchWeatherForCity,
     clearError,
   };
